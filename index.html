@@ -1,1 +1,677 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Miro Resource Calculator</title>
+    <script src="https://miro.com/app/static/sdk/v2/miro.js?v=4"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background: #f8f9fa;
+            height: 100vh;
+            overflow: hidden;
+        }
 
+        .container {
+            max-width: 280px;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .section {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #495057;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 5px;
+        }
+
+        .globals-grid {
+            display: grid;
+            grid-template-columns: 1fr 60px;
+            gap: 8px;
+            align-items: center;
+        }
+
+            .globals-grid label {
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .globals-grid input {
+                padding: 4px 6px;
+                border: 1px solid #ced4da;
+                border-radius: 3px;
+                font-size: 11px;
+                text-align: center;
+            }
+
+        button {
+            width: 100%;
+            padding: 8px;
+            margin: 3px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .btn-sum {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .btn-product {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-spawn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-expand {
+            background: #17a2b8;
+            color: white;
+        }
+
+        button:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        #selection {
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            border: 1px solid #e9ecef;
+        }
+
+        .resource-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .resource-btn {
+            padding: 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            border: 1px solid #dee2e6;
+        }
+
+        .barrel-small {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .barrel-medium {
+            background: #ffeaa7;
+            color: #6c5400;
+        }
+
+        .barrel-big {
+            background: #fdcb6e;
+            color: #5a4a00;
+        }
+
+        .dig {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .crate {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .pool-controls {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+            flex-direction: column;
+        }
+
+        .pool-select {
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-size: 11px;
+            background: white;
+        }
+
+        .pool-input {
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .pool-btn {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+        }
+
+        .pool-create {
+            background: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+        }
+
+        .spawn-input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            margin: 4px 0;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+
+        .relationships-section {
+            margin-top: 15px;
+        }
+
+        .toggle-btn {
+            width: 100%;
+            padding: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            text-align: left;
+        }
+
+            .toggle-btn:hover {
+                background: #e9ecef;
+            }
+
+        .relationships-list {
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .relationship-item {
+            padding: 8px;
+            margin: 4px;
+            background: #f8f9fa;
+            border-radius: 3px;
+            border-left: 3px solid #007bff;
+            font-size: 11px;
+        }
+
+            .relationship-item.sum {
+                border-left-color: #ffc107;
+            }
+
+            .relationship-item.product {
+                border-left-color: #28a745;
+            }
+
+        .relationship-header {
+            font-weight: 600;
+            margin-bottom: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relationship-name {
+            font-size: 10px;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .relationship-sources {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .relationship-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .action-btn {
+            flex: 1;
+            font-size: 9px;
+            padding: 3px 6px;
+            margin: 0;
+        }
+
+        .goto-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .select-parents-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .rename-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        #status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            display: none;
+            font-size: 12px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 6px;
+            width: 250px;
+            text-align: center;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal button {
+            margin: 5px;
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>Miro Resource Calculator</h3>
+
+        <div class="section">
+            <div class="section-title">Global Variables</div>
+            <div class="globals-grid">
+                <label>Barrel Small:</label>
+                <input type="number" id="barrelSmall" value="5" min="1">
+                <label>Barrel Medium:</label>
+                <input type="number" id="barrelMedium" value="10" min="1">
+                <label>Barrel Big:</label>
+                <input type="number" id="barrelBig" value="20" min="1">
+                <label>Dig:</label>
+                <input type="number" id="digValue" value="3" min="1">
+                <label>Crate:</label>
+                <input type="number" id="crateValue" value="15" min="1">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Calculator</div>
+            <div id="selection">Select sticky notes with numbers</div>
+            <button id="sumBtn" class="btn-sum" disabled>Create Sum</button>
+            <button id="productBtn" class="btn-product" disabled>Create Product</button>
+            <button id="expandBtn" class="btn-expand" disabled>Expand Relationship</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Create Resources</div>
+            <div class="resource-controls">
+                <button id="createBarrelSmall" class="resource-btn barrel-small">Small Barrel</button>
+                <button id="createBarrelMedium" class="resource-btn barrel-medium">Med Barrel</button>
+                <button id="createBarrelBig" class="resource-btn barrel-big">Big Barrel</button>
+                <button id="createDig" class="resource-btn dig">Dig</button>
+                <button id="createCrate" class="resource-btn crate">Crate</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Resource Pool Spawner</div>
+            <div class="pool-controls">
+                <select id="resourceTypeSelect" class="pool-select">
+                    <option value="barrel-small">Small Barrel</option>
+                    <option value="barrel-medium">Med Barrel</option>
+                    <option value="barrel-big">Big Barrel</option>
+                    <option value="dig">Dig</option>
+                    <option value="crate">Crate</option>
+                </select>
+                <input type="number" id="poolQuantity" class="pool-input" min="2" max="20" value="3" placeholder="Quantity">
+            </div>
+            <button id="createResourcePool" class="pool-btn pool-create">Create Connected Pool</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Spawn Numbers</div>
+            <input type="number" id="spawnCount" class="spawn-input" min="1" max="20" value="3" placeholder="Number to spawn">
+            <button id="spawnBtn" class="btn-spawn">Spawn Connected Numbers</button>
+        </div>
+
+        <div class="relationships-section">
+            <button id="toggleRelationships" class="toggle-btn">
+                ▼ Show Relationships (<span id="relationshipCount">0</span>)
+            </button>
+            <div id="relationshipsList" class="relationships-list" style="display: none;">
+                <div id="relationshipsContent">No calculator relationships found</div>
+            </div>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <h4>Rename Relationship</h4>
+            <input type="text" id="renameInput" placeholder="Enter new name" maxlength="20">
+            <div>
+                <button id="confirmRename" class="btn-sum">Save</button>
+                <button id="cancelRename" class="btn-spawn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        //Insert JavaScript code here
+let isInitialized = false;
+let calculatorNotes = new Map();
+let spawnedResources = new Map();
+let lastUIUpdate = 0;
+let lastCalculatorCheck = 0;
+let currentRenamingId = null;
+let globalVariables = {
+    barrelSmall: 5,
+    barrelMedium: 10,
+    barrelBig: 20,
+    digValue: 3,
+    crateValue: 15
+};
+let notesInRelationships = new Set();
+
+async function preciseCleanup() {
+    const allItems = await miro.board.getAll();
+    const validIds = new Set(allItems.filter(i => i.type === 'sticky_note').map(i => i.id));
+    const toDelete = [];
+    for (const [resultId, calcData] of calculatorNotes.entries()) {
+        // Remove if result note missing
+        if (!validIds.has(resultId)) {
+            toDelete.push(resultId);
+            continue;
+        }
+        // Remove if <2 valid sources
+        const validSources = calcData.sourceIds.filter(id => validIds.has(id));
+        if (validSources.length < 2) {
+            toDelete.push(resultId);
+            continue;
+        }
+        // Update sources to only valid ones
+        calcData.sourceIds = validSources;
+        calculatorNotes.set(resultId, calcData);
+    }
+    for (const resultId of toDelete) {
+        calculatorNotes.delete(resultId);
+    }
+    // Limit to 50 relationships
+    if (calculatorNotes.size > 50) {
+        const sorted = Array.from(calculatorNotes.entries())
+            .sort((a, b) => (b[1].created || 0) - (a[1].created || 0))
+            .slice(0, 50);
+        calculatorNotes = new Map(sorted);
+    }
+}
+
+async function updateRelationshipsList() {
+    const content = document.getElementById('relationshipsContent');
+    if (!content) return;
+
+    await preciseCleanup();
+
+    if (calculatorNotes.size === 0) {
+        content.innerHTML = 'No calculator relationships found';
+        return;
+    }
+
+    let html = '';
+    for (const [resultId, calcData] of calculatorNotes.entries()) {
+        // Get result note content
+        let resultContent = '';
+        try {
+            const resultNote = await miro.board.getById(resultId);
+            resultContent = resultNote ? resultNote.content.replace(/<[^>]*>/g, '').trim() : '';
+        } catch {}
+        // Get source note contents
+        let sourceContents = [];
+        for (const sourceId of calcData.sourceIds) {
+            try {
+                const sourceNote = await miro.board.getById(sourceId);
+                sourceContents.push(sourceNote ? sourceNote.content.replace(/<[^>]*>/g, '').trim() : '[deleted]');
+            } catch {
+                sourceContents.push('[deleted]');
+            }
+        }
+        html += `
+            <div class="relationship-item ${calcData.operation}">
+                <div class="relationship-header">
+                    <span class="goto-result" data-result-id="${resultId}" style="cursor:pointer;">
+                        ${calcData.operation.toUpperCase()}: ${resultContent}
+                    </span>
+                    <span class="relationship-name rename-result" data-result-id="${resultId}" style="cursor:pointer;">
+                        ${calcData.name || 'Unnamed'}
+                    </span>
+                </div>
+                <div class="relationship-sources">
+                    Sources: ${sourceContents.join(', ')}
+                </div>
+                <div class="relationship-actions">
+                    <button class="action-btn goto-btn" data-result-id="${resultId}">Go</button>
+                    <button class="action-btn select-parents-btn" data-result-id="${resultId}">Parents</button>
+                    <button class="action-btn rename-btn" data-result-id="${resultId}">Rename</button>
+                    <button class="action-btn delete-btn" data-result-id="${resultId}">Delete</button>
+                </div>
+            </div>
+        `;
+    }
+    content.innerHTML = html;
+    content.onclick = function (event) {
+        const target = event.target;
+        const resultId = target.getAttribute('data-result-id');
+        if (!resultId) return;
+        if (target.classList.contains('goto-btn') || target.classList.contains('goto-result')) goToResultNote(resultId);
+        else if (target.classList.contains('select-parents-btn')) selectParents(resultId);
+        else if (target.classList.contains('rename-btn') || target.classList.contains('rename-result')) startRename(resultId);
+        else if (target.classList.contains('delete-btn')) deleteRelationship(resultId);
+    };
+}
+
+async function calculate(operation) {
+    try {
+        const selection = await miro.board.getSelection();
+        const validItems = selection.filter(item => item.type === 'sticky_note' && item.content);
+
+        const numbers = validItems
+            .map(item => {
+                const cleanContent = item.content.replace(/<[^>]*>/g, '').trim();
+                const match = cleanContent.match(/\((\d+)\)/) || cleanContent.match(/^(\d+)$/);
+                if (match) return parseFloat(match[1]);
+                const num = parseFloat(cleanContent);
+                return isNaN(num) ? null : num;
+            })
+            .filter(n => n !== null);
+
+        if (numbers.length < 2) {
+            showStatus('Please select at least 2 items with numbers', 'error');
+            return;
+        }
+
+        let result = operation === 'sum'
+            ? numbers.reduce((a, b) => a + b, 0)
+            : numbers.reduce((a, b) => a * b, 1);
+
+        const lastItem = validItems[validItems.length - 1];
+        const newX = lastItem.x + (lastItem.width || 200) + 50;
+        const newY = lastItem.y;
+
+        let fillColor = operation === 'sum' ? 'light_yellow' : 'dark_green';
+
+        const calculatorNote = await miro.board.createStickyNote({
+            content: result.toString(),
+            x: newX,
+            y: newY,
+            style: { fillColor }
+        });
+
+        const sourceIds = validItems.map(item => item.id);
+        calculatorNotes.set(calculatorNote.id, {
+            operation,
+            sourceIds,
+            name: `${operation.toUpperCase()}_${Date.now().toString().slice(-6)}`,
+            created: Date.now()
+        });
+
+        updateNotesInRelationships();
+        await preciseCleanup();
+        await saveCalculatorData();
+        updateRelationshipsCount();
+        await miro.board.viewport.zoomTo(calculatorNote);
+        await updateRelationshipsList();
+        showStatus(`${operation} created: ${result}`, 'success');
+    } catch (error) {
+        console.error('Error in calculate:', error);
+        showStatus('Error: ' + error.message, 'error');
+    }
+}
+
+async function expandRelationship() {
+    try {
+        const selection = await miro.board.getSelection();
+
+        let calculatorResultId = null;
+        const newSourceItems = [];
+
+        for (const item of selection) {
+            if (item.type === 'sticky_note') {
+                if (calculatorNotes.has(item.id)) {
+                    if (calculatorResultId) {
+                        showStatus('Please select only one calculator result to expand', 'error');
+                        return;
+                    }
+                    calculatorResultId = item.id;
+                } else if (item.content) {
+                    const cleanContent = item.content.replace(/<[^>]*>/g, '').trim();
+                    const match = cleanContent.match(/\((\d+)\)/) || cleanContent.match(/^(\d+)$/);
+                    if (match) {
+                        newSourceItems.push(item);
+                    } else {
+                        const num = parseFloat(cleanContent);
+                        if (!isNaN(num)) {
+                            newSourceItems.push(item);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!calculatorResultId || newSourceItems.length === 0) {
+            showStatus('Please select a calculator result and at least one number note', 'error');
+            return;
+        }
+
+        const calcData = calculatorNotes.get(calculatorResultId);
+        if (!calcData) {
+            showStatus('Calculator relationship not found', 'error');
+            return;
+        }
+
+        const newSourceIds = newSourceItems.map(item => item.id);
+        const updatedSourceIds = [...calcData.sourceIds, ...newSourceIds];
+
+        calcData.sourceIds = updatedSourceIds;
+        calculatorNotes.set(calculatorResultId, calcData);
+
+        updateNotesInRelationships();
+
+        await recalculateResult(calculatorResultId, calcData);
+        await saveCalculatorData();
+        await updateRelationshipsList();
+
+        showStatus(`Added ${newSourceItems.length} item(s) to ${calcData.operation} relationship`, 'success');
+    } catch (error) {
+        console.error('Error expanding relationship:', error);
+        showStatus('Error expanding relationship: ' + error.message, 'error');
+    }
+}
+
+// ... (rest of your code remains unchanged, including resource creation, UI setup, etc.)
+
+// Make sure to call updateRelationshipsList() after any relationship change (create, expand, delete, rename).
+    </script>
+</body>
+</html>
